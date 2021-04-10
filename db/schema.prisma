@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -19,10 +19,11 @@ model User {
   name           String?
   email          String   @unique
   hashedPassword String?
-  role           String   @default("USER")
+  role           UserRole @default(USER)
 
   tokens   Token[]
   sessions Session[]
+  Profile  Profile[]
 }
 
 model Session {
@@ -57,9 +58,124 @@ model Token {
   @@unique([hashedToken, type])
 }
 
+enum IssuePriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum UserRole {
+  DRIVER
+  OWNER
+  ADMIN
+  DRIVER_OWNER
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model File {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  mimeType  String
+  url       String   @unique
+  ik        String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id            Int    @id @default(autoincrement())
+  licenseNumber String
+  licensePlace  String
+  dob           String
+  gender        Gender
+  address       String
+  phone         String
+  avatar        String
+  city          String
+  region        String
+
+  ghanaCard String
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // NOTE: It's highly recommended to use an enum for the token type
 //       but enums only work in Postgres.
 //       See: https://blitzjs.com/docs/database-overview#switch-to-postgresql
 // enum TokenType {
 //   RESET_PASSWORD
 // }
+
+model Vehicle {
+  id                 Int         @id @default(autoincrement())
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  makeModel          String
+  type               VehicleType @relation(fields: [typeId], references: [id])
+  typeId             Int
+  name               String
+  manufacturingYear  String
+  isActive           Boolean
+  image              String
+  registrationNumber String
+  engineNumber       String
+  chasisNumber       String
+  isSecondary        Boolean
+
+  role   VehicleRole @relation(fields: [roleId], references: [id])
+  roleId Int
+}
+
+model VehicleRole {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Vehicle     Vehicle[]
+}
+
+model VehicleType {
+  id        Int       @id @default(autoincrement())
+  type      String
+  Vehicle   Vehicle[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  isDone      Boolean  @default(false)
+  doneAt      DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vendor {
+  id          Int     @id @default(autoincrement())
+  type        String
+  contactName String
+  phone       String?
+  email       String
+  website     String
+  address     String
+  city        String
+  region      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

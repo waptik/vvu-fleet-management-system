@@ -1,5 +1,7 @@
-import { ReactNode } from "react"
+import React, { ReactNode } from "react"
 import { Head } from "blitz"
+import Footer from "../components/Footer"
+import Header from "../components/Header"
 
 type LayoutProps = {
   title?: string
@@ -10,11 +12,13 @@ const Layout = ({ title, children }: LayoutProps) => {
   return (
     <>
       <Head>
-        <title>{title || "fleet"}</title>
+        <title>{title || "Fleetero"}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <Header />
       {children}
+      <Footer />
     </>
   )
 }
