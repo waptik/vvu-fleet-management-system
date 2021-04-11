@@ -1,6 +1,11 @@
+import { FormErrorMessage } from "@chakra-ui/form-control"
+import { Box } from "@chakra-ui/layout"
 import { useState, ReactNode, PropsWithoutRef } from "react"
 import { FormProvider, useForm, UseFormOptions } from "react-hook-form"
 import * as z from "zod"
+import { FormList } from "./Box"
+
+import { SubmitBtn } from "./Buttons"
 
 export interface FormProps<S extends z.ZodType<any, any>>
   extends Omit<PropsWithoutRef<JSX.IntrinsicElements["form"]>, "onSubmit"> {
@@ -8,6 +13,7 @@ export interface FormProps<S extends z.ZodType<any, any>>
   children?: ReactNode
   /** Text to display in the submit button */
   submitText?: string
+  loading?: boolean
   schema?: S
   onSubmit: (values: z.infer<S>) => Promise<void | OnSubmitResult>
   initialValues?: UseFormOptions<z.infer<S>>["defaultValues"]
@@ -25,6 +31,7 @@ export function Form<S extends z.ZodType<any, any>>({
   submitText,
   schema,
   initialValues,
+  loading = false,
   onSubmit,
   ...props
 }: FormProps<S>) {
@@ -45,46 +52,42 @@ export function Form<S extends z.ZodType<any, any>>({
   const [formError, setFormError] = useState<string | null>(null)
 
   return (
-    <FormProvider {...ctx}>
-      <form
-        onSubmit={ctx.handleSubmit(async (values) => {
-          const result = (await onSubmit(values)) || {}
-          for (const [key, value] of Object.entries(result)) {
-            if (key === FORM_ERROR) {
-              setFormError(value)
-            } else {
-              ctx.setError(key as any, {
-                type: "submit",
-                message: value,
-              })
+    <>
+      <FormProvider {...ctx}>
+        <Box
+          as="form"
+          // align={undefined}
+          onSubmit={ctx.handleSubmit(async (values) => {
+            const result = (await onSubmit(values)) || {}
+            for (const [key, value] of Object.entries(result)) {
+              if (key === FORM_ERROR) {
+                setFormError(value)
+              } else {
+                ctx.setError(key as any, {
+                  type: "submit",
+                  message: value,
+                })
+              }
             }
-          }
-        })}
-        className="form"
-        {...props}
-      >
-        {/* Form fields supplied as children are rendered here */}
-        {children}
+          })}
+          {...props}
+        >
+          {/* Form fields supplied as children are rendered here */}
 
-        {formError && (
-          <div role="alert" style={{ color: "red" }}>
-            {formError}
-          </div>
-        )}
+          <FormList>{children}</FormList>
 
-        {submitText && (
-          <button type="submit" disabled={ctx.formState.isSubmitting}>
-            {submitText}
-          </button>
-        )}
+          {formError && <FormErrorMessage>{formError}</FormErrorMessage>}
 
-        <style global jsx>{`
-          .form > * + * {
-            margin-top: 1rem;
-          }
-        `}</style>
-      </form>
-    </FormProvider>
+          {submitText && (
+            <SubmitBtn
+              loading={loading}
+              isDisabled={ctx.formState.isSubmitting}
+              submitBtnLabel={submitText}
+            />
+          )}
+        </Box>
+      </FormProvider>
+    </>
   )
 }
 
